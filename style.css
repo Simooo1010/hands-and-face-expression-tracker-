@@ -26,7 +26,8 @@ video {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transform: scaleX(-1); /* Mirror camera feed horizontally */
+    transform: scaleX(-1);
+    /* Mirror camera feed horizontally */
 }
 
 canvas {
@@ -34,9 +35,11 @@ canvas {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transform: scaleX(-1); /* Mirror canvas to align with drawing */
+    transform: scaleX(-1);
+    /* Mirror canvas to align with drawing */
     z-index: 10;
-    pointer-events: none; /* Make canvas click-through to video */
+    pointer-events: none;
+    /* Make canvas click-through to video */
 }
 
 #status-overlay {
@@ -52,7 +55,7 @@ canvas {
     backdrop-filter: blur(6px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     min-width: 220px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
 #loading {
@@ -73,7 +76,7 @@ canvas {
     gap: 12px;
     backdrop-filter: blur(6px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
 label {

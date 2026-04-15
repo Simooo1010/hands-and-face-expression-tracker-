@@ -38,7 +38,7 @@ async function initializeModels() {
         const vision = await FilesetResolver.forVisionTasks(
             "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
         );
-        
+
         // Load Hand Landmarker
         const handPromise = HandLandmarker.createFromOptions(vision, {
             baseOptions: {
@@ -67,12 +67,10 @@ async function initializeModels() {
         });
 
         [handLandmarker, faceLandmarker] = await Promise.all([handPromise, facePromise]);
-        
+
         loadingMsg.style.display = "none";
         infoDiv.style.display = "block";
-        
-        // Start the camera after models are loaded
-        startCamera();
+        document.getElementById("start-btn").disabled = false;
     } catch (error) {
         console.error("Error loading MediaPipe models:", error);
         loadingMsg.innerText = "Error loading models. Check console.";
@@ -97,7 +95,8 @@ async function startCamera() {
     } catch (err) {
         console.error("Error accessing webcam:", err);
         loadingMsg.style.display = "block";
-        loadingMsg.innerText = "Camera access denied or unavailable. Please grant permissions.";
+        const t = translations[window.currentLang || 'en'];
+        loadingMsg.innerText = t.errCamera;
         loadingMsg.style.color = "#ff4d4d";
         infoDiv.style.display = "none";
     }
@@ -106,11 +105,11 @@ async function startCamera() {
 // Helper: Evaluate facial expressions based on blendshapes
 function analyzeExpressions(blendshapes) {
     if (!blendshapes || blendshapes.length === 0) return "Neutral";
-    
+
     // We only have 1 face configured
     const categories = blendshapes[0].categories;
     const expressions = [];
-    
+
     // Create a dictionary for logic comparisons
     const scores = {};
     for (const shape of categories) {
@@ -123,19 +122,19 @@ function analyzeExpressions(blendshapes) {
     if (scores["mouthSmileLeft"] > threshold || scores["mouthSmileRight"] > threshold) {
         expressions.push("😊 Smiling");
     }
-    
+
     // Mouth open logic
     if (scores["jawOpen"] > 0.4) {
         expressions.push("😮 Mouth Open");
     }
-    
+
     // Blinking
     if (scores["eyeBlinkLeft"] > threshold && scores["eyeBlinkRight"] > threshold) {
-         expressions.push("😑 Blinking (Both Eyes)");
+        expressions.push("😑 Blinking (Both Eyes)");
     } else if (scores["eyeBlinkLeft"] > threshold) {
-         expressions.push("😉 Wink (Left Eye)"); // Model tracks left/right from user perspective
+        expressions.push("😉 Wink (Left Eye)"); // Model tracks left/right from user perspective
     } else if (scores["eyeBlinkRight"] > threshold) {
-         expressions.push("😉 Wink (Right Eye)");
+        expressions.push("😉 Wink (Right Eye)");
     }
 
     // Eyebrows
@@ -152,104 +151,99 @@ function analyzeExpressions(blendshapes) {
     return expressions.join("<br>");
 }
 
-const MAX_PREDICT_FRAMES = 60; // Predict for ~2 seconds if occluded (assuming ~30 fps)
-let trackedHands = []; 
-let handIdCounter = 0;
-
-function calculateCentroid(landmarks) {
-    let x = 0, y = 0, z = 0;
-    for (let lm of landmarks) {
-        x += lm.x; y += lm.y; z += lm.z;
+const translations = {
+    en: {
+        title: "Hand Tracking Tool",
+        description: "Explore real-time hand and face tracking using advanced AI. See landmarks, gestures, and expressions in high performance.",
+        infoCamera: "Camera access is required for real-time tracking. No data is sent to any server; all processing happens locally on your device.",
+        startBtn: "Enable Camera & Start",
+        labelHands: "Hands Detected:",
+        labelHandedness: "Handedness:",
+        labelFaces: "Faces Detected:",
+        labelExpressions: "Expressions:",
+        labelHandLandmarks: "Show Hand Landmarks",
+        labelHandConnections: "Show Hand Connections",
+        labelFaceLandmarks: "Show Face Landmarks",
+        loading: "Initializing AI Models...",
+        errCamera: "Camera access denied or unavailable. Please grant permissions."
+    },
+    it: {
+        title: "Strumento di Tracciamento Mani",
+        description: "Esplora il tracciamento in tempo reale di mani e viso con intelligenza artificiale avanzata. Visualizza punti di riferimento, gesti ed espressioni.",
+        infoCamera: "L'accesso alla telecamera è necessario per il tracciamento in tempo reale. Nessun dato viene inviato a server; l'elaborazione avviene localmente.",
+        startBtn: "Abilita Fotocamera e Inizia",
+        labelHands: "Mani Rilevate:",
+        labelHandedness: "Lateralità:",
+        labelFaces: "Visi Rilevati:",
+        labelExpressions: "Espressioni:",
+        labelHandLandmarks: "Mostra Punti Reperere Mani",
+        labelHandConnections: "Mostra Connessioni Mani",
+        labelFaceLandmarks: "Mostra Punti Reperere Viso",
+        loading: "Inizializzazione Modelli IA...",
+        errCamera: "Accesso alla telecamera negato o non disponibile."
+    },
+    es: {
+        title: "Herramienta de Seguimiento de Manos",
+        description: "Explora el seguimiento en tiempo real de manos y cara usando inteligencia artificial avanzada.",
+        infoCamera: "El acceso a la cámara es necesario para el seguimiento. Ningún dato se envía a un servidor; todo procesado localmente.",
+        startBtn: "Habilitar Cámara y Comenzar",
+        labelHands: "Manos Detectadas:",
+        labelHandedness: "Lateralidad:",
+        labelFaces: "Rostros Detectados:",
+        labelExpressions: "Expresiones:",
+        labelHandLandmarks: "Mostrar Puntos Manos",
+        labelHandConnections: "Mostrar Conexiones Manos",
+        labelFaceLandmarks: "Mostrar Puntos Rostro",
+        loading: "Inicializando Modelos de IA...",
+        errCamera: "Acceso a la cámara denegado o no disponible."
+    },
+    fr: {
+        title: "Outil de Suivi des Mains",
+        description: "Explorez le suivi en temps réel des mains et du visage à l'aide d'une IA avancée.",
+        infoCamera: "L'accès à la caméra est requis pour le suivi en temps réel. Aucune donnée n'est envoyée à un serveur.",
+        startBtn: "Activer la Caméra et Démarrer",
+        labelHands: "Mains Détectées:",
+        labelHandedness: "Latéralité:",
+        labelFaces: "Visages Détectés:",
+        labelExpressions: "Expressions:",
+        labelHandLandmarks: "Afficher Points Repères Mains",
+        labelHandConnections: "Afficher Connexions Mains",
+        labelFaceLandmarks: "Afficher Points Repères Visage",
+        loading: "Initialisation des Modèles IA...",
+        errCamera: "Accès à la caméra refusé ou indisponible."
     }
-    const len = landmarks.length;
-    return { x: x/len, y: y/len, z: z/len };
-}
+};
 
-function updateTrackedHands(detectedLandmarks, detectedHandednesses) {
-    const currentDetected = [];
-    const numHands = detectedLandmarks ? detectedLandmarks.length : 0;
-    
-    for (let i = 0; i < numHands; i++) {
-        // Deep copy landmarks so we can modify them during prediction
-        const copiedLandmarks = detectedLandmarks[i].map(lm => ({x: lm.x, y: lm.y, z: lm.z}));
-        currentDetected.push({
-            landmarks: copiedLandmarks,
-            centroid: calculateCentroid(copiedLandmarks),
-            handedness: detectedHandednesses ? detectedHandednesses[i] : null,
-            matched: false
-        });
+window.setLanguage = function (lang) {
+    document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`.lang-btn[data-lang="${lang}"]`).classList.add('active');
+
+    const t = translations[lang];
+    document.getElementById('title').innerText = t.title;
+    document.getElementById('description').innerText = t.description;
+    document.getElementById('info-camera').innerText = t.infoCamera;
+    document.getElementById('start-btn').innerText = t.startBtn;
+    document.getElementById('label-hands').innerText = t.labelHands;
+    document.getElementById('label-handedness').innerText = t.labelHandedness;
+    document.getElementById('label-faces').innerText = t.labelFaces;
+    document.getElementById('label-expressions').innerText = t.labelExpressions;
+    document.getElementById('label-hand-landmarks').innerText = t.labelHandLandmarks;
+    document.getElementById('label-hand-connections').innerText = t.labelHandConnections;
+    document.getElementById('label-face-landmarks').innerText = t.labelFaceLandmarks;
+
+    if (loadingMsg.innerText.includes("Initializing") || loadingMsg.innerText.includes("Inizializzazione") || loadingMsg.innerText.includes("Inicializando") || loadingMsg.innerText.includes("Initialisation")) {
+        loadingMsg.innerText = t.loading;
     }
 
-    // Match existing tracked hands to detected hands
-    for (let th of trackedHands) {
-        let bestMatch = null;
-        let bestDist = Infinity;
-        
-        for (let cd of currentDetected) {
-            if (cd.matched) continue;
-            const dx = th.centroid.x - cd.centroid.x;
-            const dy = th.centroid.y - cd.centroid.y;
-            const dist = dx*dx + dy*dy;
-            if (dist < 0.1 && dist < bestDist) { // Allow matching within a reasonable distance
-                bestDist = dist;
-                bestMatch = cd;
-            }
-        }
-        
-        if (bestMatch) {
-            bestMatch.matched = true;
-            // Smooth velocity calculation to prevent jittering during prediction
-            const newVx = bestMatch.centroid.x - th.centroid.x;
-            const newVy = bestMatch.centroid.y - th.centroid.y;
-            const newVz = bestMatch.centroid.z - th.centroid.z;
-            th.velocity = {
-                x: th.velocity.x * 0.5 + newVx * 0.5,
-                y: th.velocity.y * 0.5 + newVy * 0.5,
-                z: th.velocity.z * 0.5 + newVz * 0.5
-            };
-            th.centroid = bestMatch.centroid;
-            th.landmarks = bestMatch.landmarks;
-            th.handedness = bestMatch.handedness || th.handedness;
-            th.lostFrames = 0;
-            th.isPredicted = false;
-        } else {
-            // Hand lost, predict next position using velocity
-            th.lostFrames++;
-            if (th.lostFrames < MAX_PREDICT_FRAMES) {
-                // Apply friction to velocity so it doesn't drift endlessly
-                th.velocity.x *= 0.95;
-                th.velocity.y *= 0.95;
-                th.velocity.z *= 0.95;
+    // Store current lang for errors
+    window.currentLang = lang;
+};
 
-                for (let lm of th.landmarks) {
-                    lm.x += th.velocity.x;
-                    lm.y += th.velocity.y;
-                    lm.z += th.velocity.z;
-                }
-                th.centroid.x += th.velocity.x;
-                th.centroid.y += th.velocity.y;
-                th.centroid.z += th.velocity.z;
-                th.isPredicted = true;
-            }
-        }
-    }
-
-    trackedHands = trackedHands.filter(th => th.lostFrames < MAX_PREDICT_FRAMES);
-
-    for (let cd of currentDetected) {
-        if (!cd.matched) {
-            trackedHands.push({
-                id: handIdCounter++,
-                landmarks: cd.landmarks,
-                centroid: cd.centroid,
-                velocity: {x: 0, y: 0, z: 0},
-                lostFrames: 0,
-                handedness: cd.handedness,
-                isPredicted: false
-            });
-        }
-    }
-}
+document.getElementById('start-btn').addEventListener('click', () => {
+    document.getElementById('splash-screen').style.display = 'none';
+    document.getElementById('app-container').style.display = 'flex';
+    startCamera();
+});
 
 // 3. Process video feed and draw
 async function predictWebcam() {
@@ -259,13 +253,12 @@ async function predictWebcam() {
     }
 
     let startTimeMs = performance.now();
-    
+
     // Run prediction if we have a new frame
     if (lastVideoTime !== video.currentTime) {
         lastVideoTime = video.currentTime;
         if (handLandmarker) {
             handResults = handLandmarker.detectForVideo(video, startTimeMs);
-            updateTrackedHands(handResults?.landmarks, handResults?.handednesses);
         }
         if (faceLandmarker) {
             faceResults = faceLandmarker.detectForVideo(video, startTimeMs);
@@ -283,40 +276,36 @@ async function predictWebcam() {
 
     canvasCtx.save();
     canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-    
+
     const drawingUtils = new DrawingUtils(canvasCtx);
 
     // --- Process & Draw Hands ---
-    if (trackedHands.length > 0) {
-        let predictedCount = trackedHands.filter(h => h.isPredicted).length;
-        let actualCount = trackedHands.length - predictedCount;
-        handCountElement.innerHTML = `${actualCount} <span style="font-size:0.8em; color:gray;">(${predictedCount} predicted)</span>`;
+    if (handResults && handResults.landmarks && handResults.landmarks.length > 0) {
+        handCountElement.innerText = handResults.landmarks.length;
         let handednessArr = [];
-        
-        for (let i = 0; i < trackedHands.length; i++) {
-            const th = trackedHands[i];
-            const landmarks = th.landmarks;
-            
-            if (th.handedness) {
-                const category = th.handedness[0];
-                const type = category.categoryName; 
+
+        for (let i = 0; i < handResults.landmarks.length; i++) {
+            const landmarks = handResults.landmarks[i];
+
+            if (handResults.handednesses && handResults.handednesses[i]) {
+                const category = handResults.handednesses[i][0];
+                const type = category.categoryName;
                 let confidence = Math.round(category.score * 100);
-                const statusStr = th.isPredicted ? " <span style='color:orange;'>(Predicted)</span>" : "";
-                handednessArr.push(`Hand ${i+1}: ${type} (${confidence}%)${statusStr}`);
+                handednessArr.push(`Hand ${i + 1}: ${type} (${confidence}%)`);
             }
 
             if (toggleConnections.checked) {
                 drawingUtils.drawConnectors(landmarks, HandLandmarker.HAND_CONNECTIONS, {
-                    color: th.isPredicted ? "rgba(0, 255, 255, 0.5)" : "rgba(0, 255, 0, 0.7)", 
+                    color: "rgba(0, 255, 0, 0.7)",
                     lineWidth: 4
                 });
             }
             if (toggleLandmarks.checked) {
                 drawingUtils.drawLandmarks(landmarks, {
-                    color: th.isPredicted ? "rgba(100, 200, 255, 0.6)" : "rgba(255, 0, 0, 0.9)", 
+                    color: "rgba(255, 0, 0, 0.9)",
                     lineWidth: 2,
-                    radius: th.isPredicted ? 3 : 4,
-                    fillColor: th.isPredicted ? "rgba(100, 150, 255, 0.5)" : "rgba(255, 165, 0, 0.8)"
+                    radius: 4,
+                    fillColor: "rgba(255, 165, 0, 0.8)"
                 });
             }
         }
@@ -329,7 +318,7 @@ async function predictWebcam() {
     // --- Process & Draw Faces ---
     if (faceResults && faceResults.faceLandmarks && faceResults.faceLandmarks.length > 0) {
         faceCountElement.innerText = faceResults.faceLandmarks.length;
-        
+
         for (const landmarks of faceResults.faceLandmarks) {
             if (toggleFaceLandmarks.checked) {
                 // Tesselation (mesh over face)
@@ -338,35 +327,38 @@ async function predictWebcam() {
                     lineWidth: 1
                 });
                 // Right Eye
-                drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_RIGHT_EYE, {color: "#FF3030", lineWidth: 2});
+                drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_RIGHT_EYE, { color: "#FF3030", lineWidth: 2 });
                 // Right Eyebrow
-                drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_RIGHT_EYEBROW, {color: "#FF3030", lineWidth: 2});
+                drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_RIGHT_EYEBROW, { color: "#FF3030", lineWidth: 2 });
                 // Left Eye
-                drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_LEFT_EYE, {color: "#30FF30", lineWidth: 2});
+                drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_LEFT_EYE, { color: "#30FF30", lineWidth: 2 });
                 // Left Eyebrow
-                drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_LEFT_EYEBROW, {color: "#30FF30", lineWidth: 2});
+                drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_LEFT_EYEBROW, { color: "#30FF30", lineWidth: 2 });
                 // Face Oval
-                drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_FACE_OVAL, {color: "#E0E0E0", lineWidth: 2});
+                drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_FACE_OVAL, { color: "#E0E0E0", lineWidth: 2 });
                 // Lips
-                drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_LIPS, {color: "#FF3030", lineWidth: 2});
+                drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_LIPS, { color: "#FF3030", lineWidth: 2 });
             }
         }
-        
+
         // Output Facial Expressions from blendshapes
         if (faceResults.faceBlendshapes) {
             const detectedExpressions = analyzeExpressions(faceResults.faceBlendshapes);
             expressionsElement.innerHTML = detectedExpressions;
         }
-        
+
     } else {
         faceCountElement.innerText = "0";
         expressionsElement.innerText = "None";
     }
-    
+
     canvasCtx.restore();
 
     window.requestAnimationFrame(predictWebcam);
 }
 
 // Start application
+// Start application by disabling button until models are ready
+document.getElementById("start-btn").disabled = true;
+window.currentLang = 'en';
 initializeModels();
