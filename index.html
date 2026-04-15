@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Hand Tracking Prototype</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Render the webcam stream -->
+        <video id="webcam" autoplay playsinline></video>
+        <!-- Overlay canvas for drawing landmarks -->
+        <canvas id="output_canvas"></canvas>
+        
+        <!-- Status Information Overlay -->
+        <div id="status-overlay">
+            <div id="loading">Initializing MediaPipe AI Models...</div>
+            <div id="info" style="display: none;">
+                <div><strong>FPS:</strong> <span id="fps">0</span></div>
+                <div><strong>Hands Detected:</strong> <span id="hand-count">0</span></div>
+                <div><strong>Handedness:</strong> <br><span id="handedness">None</span></div>
+                <hr style="border-color: rgba(255,255,255,0.2); margin: 8px 0;">
+                <div><strong>Faces Detected:</strong> <span id="face-count">0</span></div>
+                <div><strong>Expressions:</strong> <br><span id="expressions">None</span></div>
+            </div>
+        </div>
+        
+        <!-- Toggles for debugging/testing -->
+        <div id="controls">
+            <label><input type="checkbox" id="toggle-landmarks" checked> Show Hand Landmarks</label>
+            <label><input type="checkbox" id="toggle-connections" checked> Show Hand Connections</label>
+            <label><input type="checkbox" id="toggle-face-landmarks" checked> Show Face Landmarks</label>
+        </div>
+    </div>
+
+    <!-- JS module scripts using MediaPipe Tasks Vision -->
+    <script type="module" src="script.js"></script>
+</body>
+</html>
