@@ -13,7 +13,6 @@ const loadingMsg = document.getElementById("loading");
 const infoDiv = document.getElementById("info");
 const fpsElement = document.getElementById("fps");
 const handCountElement = document.getElementById("hand-count");
-const handednessElement = document.getElementById("handedness");
 const faceCountElement = document.getElementById("face-count");
 const expressionsElement = document.getElementById("expressions");
 
@@ -154,11 +153,10 @@ function analyzeExpressions(blendshapes) {
 const translations = {
     en: {
         title: "Hand Tracking Tool",
-        description: "Explore real-time hand and face tracking using advanced AI. See landmarks, gestures, and expressions in high performance.",
+        description: "Explore real-time hand and face tracking using advanced AI. See landmarks and expressions in high performance.",
         infoCamera: "Camera access is required for real-time tracking. No data is sent to any server; all processing happens locally on your device.",
         startBtn: "Enable Camera & Start",
         labelHands: "Hands Detected:",
-        labelHandedness: "Handedness:",
         labelFaces: "Faces Detected:",
         labelExpressions: "Expressions:",
         labelHandLandmarks: "Show Hand Landmarks",
@@ -169,11 +167,10 @@ const translations = {
     },
     it: {
         title: "Strumento di Tracciamento Mani",
-        description: "Esplora il tracciamento in tempo reale di mani e viso con intelligenza artificiale avanzata. Visualizza punti di riferimento, gesti ed espressioni.",
+        description: "Esplora il tracciamento in tempo reale di mani e viso con intelligenza artificiale avanzata. Visualizza punti di riferimento ed espressioni.",
         infoCamera: "L'accesso alla telecamera è necessario per il tracciamento in tempo reale. Nessun dato viene inviato a server; l'elaborazione avviene localmente.",
         startBtn: "Abilita Fotocamera e Inizia",
         labelHands: "Mani Rilevate:",
-        labelHandedness: "Lateralità:",
         labelFaces: "Visi Rilevati:",
         labelExpressions: "Espressioni:",
         labelHandLandmarks: "Mostra Punti Reperere Mani",
@@ -188,7 +185,6 @@ const translations = {
         infoCamera: "El acceso a la cámara es necesario para el seguimiento. Ningún dato se envía a un servidor; todo procesado localmente.",
         startBtn: "Habilitar Cámara y Comenzar",
         labelHands: "Manos Detectadas:",
-        labelHandedness: "Lateralidad:",
         labelFaces: "Rostros Detectados:",
         labelExpressions: "Expresiones:",
         labelHandLandmarks: "Mostrar Puntos Manos",
@@ -203,7 +199,6 @@ const translations = {
         infoCamera: "L'accès à la caméra est requis pour le suivi en temps réel. Aucune donnée n'est envoyée à un serveur.",
         startBtn: "Activer la Caméra et Démarrer",
         labelHands: "Mains Détectées:",
-        labelHandedness: "Latéralité:",
         labelFaces: "Visages Détectés:",
         labelExpressions: "Expressions:",
         labelHandLandmarks: "Afficher Points Repères Mains",
@@ -224,7 +219,6 @@ window.setLanguage = function (lang) {
     document.getElementById('info-camera').innerText = t.infoCamera;
     document.getElementById('start-btn').innerText = t.startBtn;
     document.getElementById('label-hands').innerText = t.labelHands;
-    document.getElementById('label-handedness').innerText = t.labelHandedness;
     document.getElementById('label-faces').innerText = t.labelFaces;
     document.getElementById('label-expressions').innerText = t.labelExpressions;
     document.getElementById('label-hand-landmarks').innerText = t.labelHandLandmarks;
@@ -254,7 +248,6 @@ async function predictWebcam() {
 
     let startTimeMs = performance.now();
 
-    // Run prediction if we have a new frame
     if (lastVideoTime !== video.currentTime) {
         lastVideoTime = video.currentTime;
         if (handLandmarker) {
@@ -282,17 +275,9 @@ async function predictWebcam() {
     // --- Process & Draw Hands ---
     if (handResults && handResults.landmarks && handResults.landmarks.length > 0) {
         handCountElement.innerText = handResults.landmarks.length;
-        let handednessArr = [];
 
         for (let i = 0; i < handResults.landmarks.length; i++) {
             const landmarks = handResults.landmarks[i];
-
-            if (handResults.handednesses && handResults.handednesses[i]) {
-                const category = handResults.handednesses[i][0];
-                const type = category.categoryName;
-                let confidence = Math.round(category.score * 100);
-                handednessArr.push(`Hand ${i + 1}: ${type} (${confidence}%)`);
-            }
 
             if (toggleConnections.checked) {
                 drawingUtils.drawConnectors(landmarks, HandLandmarker.HAND_CONNECTIONS, {
@@ -309,10 +294,8 @@ async function predictWebcam() {
                 });
             }
         }
-        handednessElement.innerHTML = handednessArr.join("<br>");
     } else {
         handCountElement.innerText = "0";
-        handednessElement.innerText = "None";
     }
 
     // --- Process & Draw Faces ---
